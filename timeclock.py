@@ -5,8 +5,7 @@ from gi.repository import Gtk
 LOG_FILE = 'time_log.json'
 
 def calculate_hash(entry, prev_hash=''):
-    entry = entry.copy()
-    entry.pop('hash', None)
+    entry = {k: v for k, v in entry.items() if k != 'hash'}
     return hashlib.sha256((json.dumps(entry, sort_keys=True) + prev_hash).encode()).hexdigest()
 
 def load_log():
@@ -57,13 +56,13 @@ class TimeClockApp(Gtk.Window):
         if not self.log or self.log[-1]['type'] == 'out':
             self.log_action(clock(self.log, 'in'), "Clocked in at")
         else:
-            self.show_error("You must clock out before clocking in again.")
+            self.show_message("Error", "You must clock out before clocking in again.")
 
     def on_clock_out(self, widget):
         if self.log and self.log[-1]['type'] == 'in':
             self.log_action(clock(self.log, 'out'), "Clocked out at")
         else:
-            self.show_error("You must clock in before clocking out.")
+            self.show_message("Error", "You must clock in before clocking out.")
 
     def on_verify_logs(self, widget):
         try:
@@ -82,12 +81,6 @@ class TimeClockApp(Gtk.Window):
 
     def show_message(self, title, message):
         dialog = Gtk.MessageDialog(transient_for=self, flags=0, message_type=Gtk.MessageType.INFO, buttons=Gtk.ButtonsType.OK, text=title)
-        dialog.format_secondary_text(message)
-        dialog.run()
-        dialog.destroy()
-
-    def show_error(self, message):
-        dialog = Gtk.MessageDialog(transient_for=self, flags=0, message_type=Gtk.MessageType.ERROR, buttons=Gtk.ButtonsType.OK, text="Error")
         dialog.format_secondary_text(message)
         dialog.run()
         dialog.destroy()
