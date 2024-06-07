@@ -1,6 +1,7 @@
-import time, os, json, hashlib, gi
+import time, os, json, hashlib, gi, csv
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
+from datetime import datetime
 
 LOG_FILE = 'time_log.json'
 
@@ -34,6 +35,20 @@ def clock(log, entry_type):
     save_log(log)
     return entry['time']
 
+def export_to_csv(log):
+    with open('time_log.csv', 'w', newline='') as csvfile:
+        fieldnames = ['Day of Week', 'Start Time', 'End Time']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        writer.writeheader()
+        for i in range(0, len(log), 2):
+            if log[i]['type'] == 'in' and (i + 1 < len(log) and log[i + 1]['type'] == 'out'):
+                start_time = datetime.strptime(log[i]['time'], '%Y-%m-%d %H:%M:%S')
+                end_time = datetime.strptime(log[i + 1]['time'], '%Y-%m-%d %H:%M:%S')
+                writer.writerow({'Day of Week': start_time.strftime('%A'),
+                                 'Start Time': start_time.strftime('%H:%M:%S'),
+                                 'End Time': end_time.strftime('%H:%M:%S')})
+
 class TimeClockApp(Gtk.Window):
     def __init__(self):
         super().__init__(title="Time Clock")
@@ -42,7 +57,7 @@ class TimeClockApp(Gtk.Window):
         self.box = Gtk.Box(spacing=6, orientation=Gtk.Orientation.VERTICAL)
         self.add(self.box)
 
-        for label, callback in [("Clock In", self.on_clock_in), ("Clock Out", self.on_clock_out), ("Verify Logs", self.on_verify_logs)]:
+        for label, callback in [("Clock In", self.on_clock_in), ("Clock Out", self.on_clock_out), ("Verify Logs", self.on_verify_logs), ("Export to CSV", self.on_export_to_csv)]:
             button = Gtk.Button(label=label)
             button.connect("clicked", callback)
             self.box.pack_start(button, True, True, 0)
@@ -70,6 +85,10 @@ class TimeClockApp(Gtk.Window):
             self.show_message("Log Verification", "All logs are valid.")
         except ValueError as e:
             self.show_message("Log Verification", str(e))
+
+    def on_export_to_csv(self, widget):
+        export_to_csv(self.log)
+        self.show_message("Export to CSV", "Log has been exported to time_log.csv")
 
     def log_action(self, time, action):
         self.update_log_view()
