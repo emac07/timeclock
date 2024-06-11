@@ -37,7 +37,7 @@ def clock(log, entry_type):
 
 def export_to_csv(log):
     with open('time_log.csv', 'w', newline='') as csvfile:
-        fieldnames = ['Day of Week', 'Start Time', 'End Time']
+        fieldnames = ['Date', 'Day of Week', 'Start Time', 'End Time']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         writer.writeheader()
@@ -45,9 +45,12 @@ def export_to_csv(log):
             if log[i]['type'] == 'in' and (i + 1 < len(log) and log[i + 1]['type'] == 'out'):
                 start_time = datetime.strptime(log[i]['time'], '%Y-%m-%d %H:%M:%S')
                 end_time = datetime.strptime(log[i + 1]['time'], '%Y-%m-%d %H:%M:%S')
-                writer.writerow({'Day of Week': start_time.strftime('%A'),
-                                 'Start Time': start_time.strftime('%H:%M:%S'),
-                                 'End Time': end_time.strftime('%H:%M:%S')})
+                writer.writerow({
+                    'Date': start_time.strftime('%Y-%m-%d'),
+                    'Day of Week': start_time.strftime('%A'),
+                    'Start Time': start_time.strftime('%H:%M:%S'),
+                    'End Time': end_time.strftime('%H:%M:%S')
+                })
 
 class TimeClockApp(Gtk.Window):
     def __init__(self):
