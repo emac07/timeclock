@@ -1,7 +1,7 @@
 import time, os, json, hashlib, gi, csv
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
-from datetime import datetime
+from datetime import datetime, timedelta
 
 LOG_FILE = 'time_log.json'
 
@@ -35,9 +35,13 @@ def clock(log, entry_type):
     save_log(log)
     return entry['time']
 
+def round_to_quarter_hour(dt):
+    new_minute = (dt.minute // 15 + (1 if dt.minute % 15 >= 8 else 0)) * 15
+    return dt.replace(minute=new_minute, second=0) if new_minute < 60 else (dt.replace(minute=0, second=0) + timedelta(hours=1))
+
 def export_to_csv(log):
     with open('time_log.csv', 'w', newline='') as csvfile:
-        fieldnames = ['Date', 'Day of Week', 'Start Time', 'End Time']
+        fieldnames = ['Date', 'Day of Week', 'Start Time', 'End Time', 'Rounded Start Time', 'Rounded End Time', 'Time Difference']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         writer.writeheader()
@@ -45,11 +49,17 @@ def export_to_csv(log):
             if log[i]['type'] == 'in' and (i + 1 < len(log) and log[i + 1]['type'] == 'out'):
                 start_time = datetime.strptime(log[i]['time'], '%Y-%m-%d %H:%M:%S')
                 end_time = datetime.strptime(log[i + 1]['time'], '%Y-%m-%d %H:%M:%S')
+                rounded_start_time = round_to_quarter_hour(start_time)
+                rounded_end_time = round_to_quarter_hour(end_time)
+                time_difference = (rounded_end_time - end_time) - (rounded_start_time - start_time)
                 writer.writerow({
                     'Date': start_time.strftime('%Y-%m-%d'),
                     'Day of Week': start_time.strftime('%A'),
                     'Start Time': start_time.strftime('%H:%M:%S'),
-                    'End Time': end_time.strftime('%H:%M:%S')
+                    'End Time': end_time.strftime('%H:%M:%S'),
+                    'Rounded Start Time': rounded_start_time.strftime('%H:%M:%S'),
+                    'Rounded End Time': rounded_end_time.strftime('%H:%M:%S'),
+                    'Time Difference': str(time_difference)
                 })
 
 class TimeClockApp(Gtk.Window):
