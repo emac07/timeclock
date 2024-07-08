@@ -51,7 +51,7 @@ def export_to_csv(log):
                 end_time = datetime.strptime(log[i + 1]['time'], '%Y-%m-%d %H:%M:%S')
                 rounded_start_time = round_to_quarter_hour(start_time)
                 rounded_end_time = round_to_quarter_hour(end_time)
-                time_difference = (rounded_end_time - end_time) - (rounded_start_time - start_time)
+                time_difference = abs((rounded_start_time - start_time) + (rounded_end_time - end_time))
                 writer.writerow({
                     'Date': start_time.strftime('%Y-%m-%d'),
                     'Day of Week': start_time.strftime('%A'),
